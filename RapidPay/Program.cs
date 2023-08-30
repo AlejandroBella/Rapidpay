@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using RapidPay.Business.Entities;
 using RapidPay.Business.Services;
@@ -17,7 +18,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //services
-builder.Services.AddScoped<DataServiceBase<Card, string>, CreditCardService>();
+builder.Services.AddScoped<DataServiceBase<Card, string>, CardService>();
 
 
 // Auto Mapper Configurations
@@ -26,8 +27,9 @@ var mapperConfig = new MapperConfiguration(mc =>
     mc.AddProfile(new MappingProfile());
 });
 
-IMapper mapper = mapperConfig.CreateMapper();
-builder.Services.AddSingleton(mapper);
+
+IMapper MapperService = mapperConfig.CreateMapper();
+builder.Services.AddSingleton(MapperService);
 
 builder.Services.AddDbContext<Database>(options =>
 {
@@ -35,6 +37,9 @@ builder.Services.AddDbContext<Database>(options =>
     var connectionString = config.GetConnectionString("database");
 
 });
+
+builder.Services.AddScoped<DbContext, Database>();
+
 
 var app = builder.Build();
 

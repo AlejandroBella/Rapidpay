@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using RapidPay.Business.Entities;
 using RapidPay.Business.Helpers;
 using RapidPay.Business.Services;
 using RapidPay.View.Entities;
@@ -10,27 +11,28 @@ namespace RapidPay.Controllers
     [Route("[controller]")]
     public class CreditCardController : ControllerBase
     {
-        private readonly DataServiceBase<CardView, string> _cardService;
+        private readonly DataServiceBase<Card, string> _cardService;
         private readonly ILogger<CreditCardController> _logger;
-        private readonly IMapper _mapper;
+        private readonly IMapper MapperService;
 
-        public CreditCardController(ILogger<CreditCardController> logger, IMapper mapper, DataServiceBase<CardView, string> cardService)
+        public CreditCardController(ILogger<CreditCardController> logger, IMapper mapper, DataServiceBase<Card, string> cardService)
         {
             _cardService = cardService;
             _logger = logger;
-            _mapper = mapper;
+            MapperService = mapper;
         }
         [Route("Create")]
         [HttpPost]
-        public IActionResult Post(CardView card)
+        public IActionResult Post(CardView cardView)
         {
-            if (card is null)
+            if (cardView is null)
             {
-                throw new ArgumentNullException(nameof(card));
+                throw new ArgumentNullException(nameof(cardView));
             }
 
             try
             {
+                var card = MapperService.Map<Card>(cardView);
 
                 if (!_cardService.Validate(card, DataAction.Create))
                 {
@@ -121,15 +123,16 @@ namespace RapidPay.Controllers
 
         [Route("Update")]
         [HttpPost]
-        public IActionResult Update(CardView card)
+        public IActionResult Update(CardView cardView)
         {
-            if (card is null)
+            if (cardView is null)
             {
-                throw new ArgumentNullException(nameof(card));
+                throw new ArgumentNullException(nameof(cardView));
             }
 
             try
             {
+                var card = MapperService.Map<Card>(cardView);
 
                 if (!_cardService.Validate(card, DataAction.Create))
                 {

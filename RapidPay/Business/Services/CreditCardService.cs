@@ -7,9 +7,9 @@ using System.Text.RegularExpressions;
 
 namespace RapidPay.Business.Services
 {
-    public class CreditCardService : DataServiceBase<Card, string>
+    public class CardService : DataServiceBase<Card, string>
     {
-        public CreditCardService(IServiceProvider serviceProvider, IMapper mapper) : base(serviceProvider, mapper)
+        public CardService(IServiceProvider serviceProvider, IMapper mapper) : base(serviceProvider, mapper)
         {
         }
 
