@@ -30,23 +30,10 @@ namespace RapidPay.Data
             modelBuilder.Entity<BalanceDetailModel>()
                 .HasKey(x => x.DetailId);
 
-            modelBuilder.Entity<CardModel>()
-                .HasOne(x=>x.Balance)
-                .WithOne(m=>m.Card)
-                .HasForeignKey(typeof(CardModel),"CardNumber");
-
-            modelBuilder.Entity<BalanceModel>()
-                .HasMany(x => x.Detail)
-                .WithOne(m => m.Balance)
-                .HasForeignKey(m=>m.BalanceId);
-
-
-            //Not being used by the time, as not requiered for now in the test.
-            modelBuilder.Entity<CardHolderModel>()
-                .HasKey(x => x.IdNumber);
-
-            modelBuilder.Entity<CardHolderModel>()
-                .HasMany(ch => ch.Cards);
+            //modelBuilder.Entity<BalanceModel>()
+            //    .HasMany(x => x.Detail)
+            //    .WithOne(m => m.Balance)
+            //    .HasForeignKey(m => m.BalanceId);
 
         }
         public DbSet<CardModel> CreditCard => Set<CardModel>();
@@ -54,7 +41,5 @@ namespace RapidPay.Data
         public DbSet<BalanceDetailModel> BalanceDetail => Set<BalanceDetailModel>();
 
 
-        public DbSet<CardHolderModel> CardHolders => Set<CardHolderModel>();
     }
-
 }

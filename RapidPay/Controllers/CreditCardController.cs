@@ -42,7 +42,7 @@ namespace RapidPay.Controllers
                                 });
 
                 }
-                var result = _cardService.Set(card);
+                var result = _cardService.Create(card);
 
                 if (!result)
                 {

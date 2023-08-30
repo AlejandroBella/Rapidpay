@@ -1,22 +1,16 @@
 ﻿using AutoMapper;
 using RapidPay.Business.Entities;
-using RapidPay.Business.Helpers;
-using RapidPay.Data.Interfaces;
+using RapidPay.Data.Model;
 using RapidPay.Exceptions;
 using RapidPay.View.Entities;
 using System.Text.RegularExpressions;
 
 namespace RapidPay.Business.Services
 {
-    public class CreditCardService : DataServiceBase<CardView, string>
+    public class CreditCardService : DataServiceBase<Card, string>
     {
-        private readonly IRepository<Balance, Guid> balanceRepository;
-        private IRepository<Card, string> cardRepository;
-
         public CreditCardService(IServiceProvider serviceProvider, IMapper mapper) : base(serviceProvider, mapper)
         {
-            cardRepository = serviceProvider.GetRequiredService<IRepository<Card, string>>();
-            balanceRepository = serviceProvider.GetRequiredService<IRepository<Balance, Guid>>();
         }
 
         public override bool Delete(string id)
@@ -27,14 +21,15 @@ namespace RapidPay.Business.Services
                 {
                     throw new ArgumentException();
                 }
-                cardRepository.Delete(id);
+                var item = unitOfWork.CardRepository.GetByID(id);
+                
+                if(item == null)
+                    throw new KeyNotFoundException();
+
+                unitOfWork.CardRepository.Delete(item);
+
                 return true;
-            }
-            catch (KeyNotFoundException notFoundEx)
-            {
-                //Log the error. and continues
-                throw notFoundEx;
-            }
+            }          
             catch (Exception ex)
             {
                 //Exception is being logged in some repository
@@ -43,27 +38,44 @@ namespace RapidPay.Business.Services
             }
         }
 
-        public override IList<View.Entities.CardView> GetAll()
+        public override IList<Card> GetAll()
         {
-            var dbItem = cardRepository.GetAll();
-            var item = MapperService.Map<IList<View.Entities.CardView>>(dbItem);
+            var dbItem = unitOfWork.CardRepository.Get();
+            var item = MapperService.Map<IList<Card>>(dbItem);
             return item;
         }
 
-        public override View.Entities.CardView GetById(string id)
+        public override Card GetById(string id)
         {
             var dbItem = GetCard(id);
-            var item = MapperService.Map<View.Entities.CardView>(dbItem);
-            return item;
+            var result  = MapperService.Map<Card>(dbItem);
+
+            return result;
         }
 
-        public override bool Set(View.Entities.CardView item)
+        public override bool Create(Card item)
         {
             try
             {
-                var dbItem = MapperService.Map<Entities.Card>(item);
-                cardRepository.Set(dbItem);
+                if (!ValidateCardNumber(item.Number))
+                {
+                    throw new ArgumentException();
+                }
+                
+                if(unitOfWork.CardRepository.GetByID(item.Number) != null)
+                    throw new DuplicatedItemException();
 
+                var cardDb = MapperService.Map<CardModel>(item);
+                cardDb = unitOfWork.CardRepository.Insert(cardDb);
+                unitOfWork.BalanceRepository.Insert(new BalanceModel
+                {
+                    CardNumber = item.Number,
+                    CurrentBalance = 0
+                });
+                unitOfWork.CardRepository.Update(cardDb);
+
+                unitOfWork.Save();
+                
                 return true;
             }
             catch (DuplicatedItemException diEx)
@@ -80,14 +92,21 @@ namespace RapidPay.Business.Services
             }
         }
 
-        public override bool Update(string id, View.Entities.CardView item)
+        public override bool Update(string id, Card item)
         {
             try
             {
+                if (!ValidateCardNumber(id))
+                {
+                    throw new ArgumentException();
+                }
                 var dbItem = GetCard(id);
-                dbItem = MapperService.Map<Entities.Card>(item);
-                cardRepository.Update(id, dbItem);
+
+                var result = MapperService.Map<CardModel>(item);
+                unitOfWork.CardRepository.Update(result);
+                
                 return true;
+
             }
             catch (Exception ex)
             {
@@ -100,18 +119,22 @@ namespace RapidPay.Business.Services
 
         public bool AddBalance(string id, double amount)
         {
-            var item = GetCard(id);
-            if (item == null)
-                if (item == null)
-                {
-                    throw new KeyNotFoundException();
-                }
+            var card = GetCard(id);
+
             try
             {
-                item = MapperService.Map<Entities.Card>(item);
-                item.Balance.AddMovement(amount);
-                item.Balance.RefreshBalance();
-                balanceRepository.Update(item.Balance.BalanceId, item.Balance);
+
+               card.CurrentBalance += amount;
+                card.Balance.Detail.Add(
+                    new BalanceDetail
+                    {
+                        Amount = amount,
+                        CurrencyCode="",
+                        Date = DateTime.Now,
+                        IdBalance =card.Balance.BalanceId
+                    });
+                unitOfWork.CardRepository.Update(MapperService.Map<CardModel>(card));
+                
                 return true;
             }
             catch (Exception ex)
@@ -122,7 +145,7 @@ namespace RapidPay.Business.Services
             }
         }
 
-        public BalanceView GetBalance(string id)
+        public Balance GetBalance(string id)
         {
             var item = GetCard(id);
             if (item == null)
@@ -133,38 +156,23 @@ namespace RapidPay.Business.Services
 
             item = MapperService.Map<Entities.Card>(item);
 
-            return MapperService.Map<BalanceView>(item.Balance);
+            return MapperService.Map<Balance>(item.Balance);
 
         }
 
         private Card GetCard(string id)
         {
-            var dbItem = cardRepository.Get(id);
+            var dbItem = unitOfWork.CardRepository.GetByID(id);
             if (dbItem == null)
             {
                 throw new KeyNotFoundException();
             }
 
-            return dbItem;
+            return MapperService.Map<Card>(dbItem);
         }
 
-        public override bool Validate(CardView entity, DataAction action)
-        {
-            switch (action)
-            {
-                case DataAction.Create:
-                    return ValidateCreation(entity);
-                case DataAction.Update:
-                    return ValidateModification(entity);
-                case DataAction.Delete:
-                    return ValidateDelete(entity);
-                default:
-                    throw new InvalidOperationException();
-            }
 
-        }
-
-        protected override bool ValidateDelete(CardView entity)
+        protected override bool ValidateDelete(Card entity)
         {
             if (entity == null)
                 return false;
@@ -175,7 +183,7 @@ namespace RapidPay.Business.Services
             return true;
         }
 
-        protected override bool ValidateModification(CardView entity)
+        protected override bool ValidateModification(Card entity)
         {
             if (!ValidateCreation(entity))
                 return false;
@@ -183,7 +191,7 @@ namespace RapidPay.Business.Services
             return true;
         }
 
-        protected override bool ValidateCreation(CardView entity)
+        protected override bool ValidateCreation(Card entity)
         {
             if (entity == null)
                 return false;
@@ -210,5 +218,7 @@ namespace RapidPay.Business.Services
 
             return cardCheck.IsMatch(number);
         }
+
+     
     }
 }

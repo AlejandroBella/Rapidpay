@@ -1,8 +1,6 @@
-﻿using RapidPay.Data.Interfaces;
-
-namespace RapidPay.Data.Model
+﻿namespace RapidPay.Data.Model
 {
-    public class CardModel : IModel<string>
+    public class CardModel
     {
         public bool Active { get; set; }
 

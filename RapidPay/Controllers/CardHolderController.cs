@@ -45,7 +45,7 @@ namespace RapidPay.Controllers
                                 });
 
                 }
-                var result = _cardHolderService.Set(holder);
+                var result = _cardHolderService.Create(holder);
 
                 if (!result)
                 {

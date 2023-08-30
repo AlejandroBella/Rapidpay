@@ -5,8 +5,6 @@ using Microsoft.Identity.Web;
 using RapidPay.Business.Entities;
 using RapidPay.Business.Services;
 using RapidPay.Data;
-using RapidPay.Data.Interfaces;
-using RapidPay.Data.Repositories;
 using RapidPay.Mappings;
 using RapidPay.View.Entities;
 
@@ -19,12 +17,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 //services
-builder.Services.AddScoped<DataServiceBase<CardView, string>, CreditCardService>();
-builder.Services.AddScoped<DataServiceBase<CardHolderView, string>, BalanceService>();
+builder.Services.AddScoped<DataServiceBase<Card, string>, CreditCardService>();
 
-//repositories
-builder.Services.AddScoped<IRepository<Card, string>,CreditCardRepository>();
-builder.Services.AddScoped<IRepository<CardHolder, string>, CardHolderRepository>();
 
 // Auto Mapper Configurations
 var mapperConfig = new MapperConfiguration(mc =>
