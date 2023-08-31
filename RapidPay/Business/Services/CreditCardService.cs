@@ -22,19 +22,19 @@ namespace RapidPay.Business.Services
                     throw new ArgumentException();
                 }
                 var item = unitOfWork.CardRepository.GetByID(id);
-                
-                if(item == null)
+
+                if (item == null)
                     throw new KeyNotFoundException();
 
                 unitOfWork.CardRepository.Delete(item);
-
+                unitOfWork.Save();
                 return true;
-            }          
+            }
             catch (Exception ex)
             {
                 //Exception is being logged in some repository
                 //....
-                return false;
+                throw;
             }
         }
 
@@ -48,7 +48,7 @@ namespace RapidPay.Business.Services
         public override Card GetById(string id)
         {
             var dbItem = GetCard(id);
-            var result  = MapperService.Map<Card>(dbItem);
+            var result = MapperService.Map<Card>(dbItem);
 
             return result;
         }
@@ -61,34 +61,32 @@ namespace RapidPay.Business.Services
                 {
                     throw new ArgumentException();
                 }
-                
-                if(unitOfWork.CardRepository.GetByID(item.Number) != null)
+
+                if (unitOfWork.CardRepository.GetByID(item.Number) != null)
                     throw new DuplicatedItemException();
 
                 var cardDb = MapperService.Map<CardModel>(item);
-                cardDb = unitOfWork.CardRepository.Insert(cardDb);
-                unitOfWork.BalanceRepository.Insert(new BalanceModel
+#if DEBUG
+                if (string.IsNullOrEmpty(cardDb.UserId))
+                    cardDb.UserId = "System";
+#endif
+                cardDb.LastUpdate = DateTime.Now;
+                cardDb.Active = true;
+                cardDb.Balance = new BalanceModel
                 {
                     CardNumber = item.Number,
                     CurrentBalance = 0
-                });
-                unitOfWork.CardRepository.Update(cardDb);
-
+                };
+                unitOfWork.CardRepository.Insert(cardDb);
                 unitOfWork.Save();
-                
-                return true;
-            }
-            catch (DuplicatedItemException diEx)
-            {
-                //Log the error. and continues
-                throw diEx;
 
+                return true;
             }
             catch (Exception ex)
             {
                 //Exception is being logged in some repository
                 //....
-                return false;
+                throw;
             }
         }
 
@@ -100,11 +98,11 @@ namespace RapidPay.Business.Services
                 {
                     throw new ArgumentException();
                 }
-                var dbItem = GetCard(id);
+                var modelItem = GetCard(id);
 
-                var result = MapperService.Map<CardModel>(item);
-                unitOfWork.CardRepository.Update(result);
-                
+                var dbItem = MapperService.Map<CardModel>(modelItem);
+                unitOfWork.CardRepository.Update(dbItem);
+                unitOfWork.Save();
                 return true;
 
             }
@@ -112,7 +110,8 @@ namespace RapidPay.Business.Services
             {
                 //Exception is being logged in some repository
                 //....
-                return false;
+
+                throw;
             }
         }
 
@@ -124,17 +123,17 @@ namespace RapidPay.Business.Services
             try
             {
 
-               card.CurrentBalance += amount;
+                card.CurrentBalance += amount;
                 card.Balance.Detail.Add(
                     new BalanceDetail
                     {
                         Amount = amount,
-                        CurrencyCode="",
+                        CurrencyCode = "",
                         Date = DateTime.Now,
-                        IdBalance =card.Balance.BalanceId
+                        IdBalance = card.Balance.BalanceId
                     });
                 unitOfWork.CardRepository.Update(MapperService.Map<CardModel>(card));
-                
+                unitOfWork.Save();
                 return true;
             }
             catch (Exception ex)
@@ -219,6 +218,6 @@ namespace RapidPay.Business.Services
             return cardCheck.IsMatch(number);
         }
 
-     
+
     }
 }

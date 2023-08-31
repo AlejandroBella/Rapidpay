@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RapidPay.Business.Entities;
 using RapidPay.Business.Helpers;
@@ -8,6 +9,7 @@ using RapidPay.View.Entities;
 namespace RapidPay.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("[controller]")]
     public class CreditCardController : ControllerBase
     {
@@ -101,6 +103,16 @@ namespace RapidPay.Controllers
                               Message = Literals.InvalidKey
                           });
             }
+            catch (KeyNotFoundException notFoundEx)
+            {
+                return NotFound(
+                    new Response
+                    {
+                        Code = ErrorCodes.NotFound,
+                        Message = Literals.NotFound
+                    }
+                );
+            }
             catch (Exception ex)
             {
                 return StatusCode(500,
@@ -153,7 +165,16 @@ namespace RapidPay.Controllers
                                  Message = Literals.Ok
                              });
             }
-
+            catch (KeyNotFoundException notFoundEx)
+            {
+                return NotFound(
+                    new Response
+                    {
+                        Code = ErrorCodes.NotFound,
+                        Message = Literals.NotFound
+                    }
+                );
+            }
             catch (Exception ex)
             {
                 return StatusCode(500,
@@ -185,6 +206,16 @@ namespace RapidPay.Controllers
                                  Code = ErrorCodes.Ok,
                                  Message = Literals.Ok
                              });
+            }
+             catch (KeyNotFoundException notFoundEx)
+            {
+                return NotFound(
+                    new Response
+                    {
+                        Code = ErrorCodes.NotFound,
+                        Message = Literals.NotFound
+                    }
+                );
             }
             catch (ArgumentException ex)
             {
