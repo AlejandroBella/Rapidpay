@@ -9,8 +9,6 @@ namespace RapidPay.Mappings
     {
         public MappingProfile()
         {
-            CreateMap<CardHolder, CardHolderView>().ReverseMap();
-            CreateMap<CardHolderModel, CardHolder>().ReverseMap();
             CreateMap<CardModel, Card>().ReverseMap();
             CreateMap<CardView, Card>().ReverseMap();
             CreateMap<BalanceModel, Balance>().ReverseMap();

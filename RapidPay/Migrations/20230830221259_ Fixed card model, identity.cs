@@ -5,7 +5,7 @@
 namespace RapidPay.Migrations
 {
     /// <inheritdoc />
-    public partial class updatedatetypee : Migration
+    public partial class Fixedcardmodelidentity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

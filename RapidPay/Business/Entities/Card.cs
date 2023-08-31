@@ -1,6 +1,8 @@
-﻿namespace RapidPay.Business.Entities
+﻿using RapidPay.Business.Interfaces;
+
+namespace RapidPay.Business.Entities
 {
-    public class Card
+    public class Card:IBusinessEntity<string>
     {
         public Card()
         {
@@ -12,6 +14,8 @@
         public int PIN { get; set; }
 
         public string HolderIdNumber { get; set; }
+
+        public double CurrentBalance { get; set; }
 
         public Balance Balance { get; set; }
 

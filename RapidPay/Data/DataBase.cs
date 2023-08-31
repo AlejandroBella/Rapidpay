@@ -25,36 +25,35 @@ namespace RapidPay.Data
                 .HasKey(x => x.Number);
 
             modelBuilder.Entity<BalanceModel>()
-                .HasKey(x => x.BalanceId);
+                .HasKey(x => x.BalanceId);                
 
             modelBuilder.Entity<BalanceDetailModel>()
                 .HasKey(x => x.DetailId);
 
-            modelBuilder.Entity<CardModel>()
-                .HasOne(x=>x.Balance)
-                .WithOne(m=>m.Card)
-                .HasForeignKey(typeof(CardModel),"CardNumber");
+            modelBuilder.Entity<BalanceModel>()
+                         .Property(x => x.BalanceId)
+                         .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<BalanceDetailModel>()
+             .Property(x => x.DetailId)
+             .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<BalanceModel>()
+                .HasOne(c=>c.Card)
+                .WithOne(c=>c.Balance)
+                .HasForeignKey<CardModel>(c=>c.BalanceId)
+                .IsRequired();
 
             modelBuilder.Entity<BalanceModel>()
                 .HasMany(x => x.Detail)
                 .WithOne(m => m.Balance)
-                .HasForeignKey(m=>m.BalanceId);
-
-
-            //Not being used by the time, as not requiered for now in the test.
-            modelBuilder.Entity<CardHolderModel>()
-                .HasKey(x => x.IdNumber);
-
-            modelBuilder.Entity<CardHolderModel>()
-                .HasMany(ch => ch.Cards);
+                .HasForeignKey(m => m.BalanceId);
 
         }
         public DbSet<CardModel> CreditCard => Set<CardModel>();
         public DbSet<BalanceModel> Balance => Set<BalanceModel>();
         public DbSet<BalanceDetailModel> BalanceDetail => Set<BalanceDetailModel>();
 
-
-        public DbSet<CardHolderModel> CardHolders => Set<CardHolderModel>();
     }
-
 }
+

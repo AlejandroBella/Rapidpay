@@ -11,8 +11,8 @@ using RapidPay.Data;
 namespace RapidPay.Migrations
 {
     [DbContext(typeof(Database))]
-    [Migration("20230826165816_added active field")]
-    partial class addedactivefield
+    [Migration("20230830220548_ Fixed card model")]
+    partial class Fixedcardmodel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -20,38 +20,48 @@ namespace RapidPay.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.10");
 
-            modelBuilder.Entity("RapidPay.Data.Model.CardHolderModel", b =>
+            modelBuilder.Entity("RapidPay.Data.Model.BalanceDetailModel", b =>
                 {
-                    b.Property<string>("IdNumber")
+                    b.Property<Guid>("DetailId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("Active")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("Amount")
+                        .HasColumnType("REAL");
 
-                    b.Property<DateOnly>("BirthDate")
+                    b.Property<Guid>("BalanceId")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("CreationDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("LastName")
+                    b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly>("LastUpdate")
+                    b.Property<DateTime>("Date")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Name")
+                    b.HasKey("DetailId");
+
+                    b.HasIndex("BalanceId");
+
+                    b.ToTable("BalanceDetail");
+                });
+
+            modelBuilder.Entity("RapidPay.Data.Model.BalanceModel", b =>
+                {
+                    b.Property<Guid>("BalanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CardNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<double>("CurrentBalance")
+                        .HasColumnType("REAL");
 
-                    b.HasKey("IdNumber");
+                    b.HasKey("BalanceId");
 
-                    b.ToTable("CardHolders");
+                    b.ToTable("Balance");
                 });
 
             modelBuilder.Entity("RapidPay.Data.Model.CardModel", b =>
@@ -62,7 +72,7 @@ namespace RapidPay.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("CardHolderModelIdNumber")
+                    b.Property<Guid>("BalanceId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreationDate")
@@ -87,21 +97,40 @@ namespace RapidPay.Migrations
 
                     b.HasKey("Number");
 
-                    b.HasIndex("CardHolderModelIdNumber");
+                    b.HasIndex("BalanceId")
+                        .IsUnique();
 
                     b.ToTable("CreditCard");
                 });
 
-            modelBuilder.Entity("RapidPay.Data.Model.CardModel", b =>
+            modelBuilder.Entity("RapidPay.Data.Model.BalanceDetailModel", b =>
                 {
-                    b.HasOne("RapidPay.Data.Model.CardHolderModel", null)
-                        .WithMany("Cards")
-                        .HasForeignKey("CardHolderModelIdNumber");
+                    b.HasOne("RapidPay.Data.Model.BalanceModel", "Balance")
+                        .WithMany("Detail")
+                        .HasForeignKey("BalanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Balance");
                 });
 
-            modelBuilder.Entity("RapidPay.Data.Model.CardHolderModel", b =>
+            modelBuilder.Entity("RapidPay.Data.Model.CardModel", b =>
                 {
-                    b.Navigation("Cards");
+                    b.HasOne("RapidPay.Data.Model.BalanceModel", "Balance")
+                        .WithOne("Card")
+                        .HasForeignKey("RapidPay.Data.Model.CardModel", "BalanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Balance");
+                });
+
+            modelBuilder.Entity("RapidPay.Data.Model.BalanceModel", b =>
+                {
+                    b.Navigation("Card")
+                        .IsRequired();
+
+                    b.Navigation("Detail");
                 });
 #pragma warning restore 612, 618
         }

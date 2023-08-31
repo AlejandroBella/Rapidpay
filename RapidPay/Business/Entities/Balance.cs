@@ -1,6 +1,10 @@
-﻿namespace RapidPay.Business.Entities
+﻿
+
+using RapidPay.Business.Interfaces;
+
+namespace RapidPay.Business.Entities
 {
-    public class Balance
+    public class Balance : IBusinessEntity<Guid>
     {
         public Balance()
         {
@@ -9,8 +13,14 @@
 
         public Guid BalanceId { get; set; }
         public string CardNumber { get; set; }
-        public string CurrencyCode { get; set; }
         public List<BalanceDetail> Detail { get; set; }
         public double CurrentBalance { get; set; }
-      
+
+        public Guid Id {
+            get
+            {
+                return BalanceId;
+            }
+        }
+    }
 }
