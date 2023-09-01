@@ -13,13 +13,13 @@ namespace RapidPay.Controllers
     [Route("[controller]")]
     public class CreditCardController : ControllerBase
     {
-        private readonly DataServiceBase<Card, string> _cardService;
+        private readonly CardService _cardService;
         private readonly ILogger<CreditCardController> _logger;
         private readonly IMapper MapperService;
 
         public CreditCardController(ILogger<CreditCardController> logger, IMapper mapper, DataServiceBase<Card, string> cardService)
         {
-            _cardService = cardService;
+            _cardService = (CardService)cardService;
             _logger = logger;
             MapperService = mapper;
         }
@@ -207,7 +207,7 @@ namespace RapidPay.Controllers
                                  Message = Literals.Ok
                              });
             }
-             catch (KeyNotFoundException notFoundEx)
+            catch (KeyNotFoundException notFoundEx)
             {
                 return NotFound(
                     new Response
@@ -236,6 +236,112 @@ namespace RapidPay.Controllers
                             });
             }
 
+        }
+        [HttpPost]
+        public IActionResult Pay(BalanceDetailView detail)
+        {
+            if (detail.Amount == 0)
+                return BadRequest(new Response
+                {
+                    Code = ErrorCodes.InvalidObject,
+                    Message = Literals.AmountNotero
+                });
+
+            if (string.IsNullOrEmpty(detail.CurrencyCode))
+                return BadRequest(new Response
+                {
+                    Code = ErrorCodes.InvalidObject,
+                    Message = Literals.CurrencyInvalid
+                });
+
+            var item = MapperService.Map<BalanceDetail>(detail);
+
+            try
+            {
+                _cardService.AddBalance(item);
+                return Ok();
+            }
+            catch (KeyNotFoundException notFoundEx)
+            {
+                return NotFound(
+                    new Response
+                    {
+                        Code = ErrorCodes.NotFound,
+                        Message = Literals.NotFound
+                    }
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(
+                          new Response
+                          {
+                              Code = ErrorCodes.InvalidObject,
+                              Message = Literals.InvalidKey
+                          });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500,
+                            new Response
+                            {
+                                Code = ErrorCodes.SystemError,
+                                Message = Literals.SystemError
+                            });
+            }
+
+        }
+
+        [HttpGet]
+        public IActionResult BalanceDetail(string cardNumber)
+        {
+            if (string.IsNullOrEmpty(cardNumber))
+            {
+                return BadRequest(new Response
+                {
+                    Code = ErrorCodes.InvalidObject,
+                    Message = Literals.Invalid
+                });
+
+            }
+
+            try
+            {
+                var balance = _cardService.GetBalance(cardNumber);
+                var result = new
+                {
+                    Balance = MapperService.Map<BalanceView>(balance),
+                    Detail = MapperService.Map<List<BalanceDetailView>>(balance.Detail)
+                };
+                
+                return Ok(result);
+            }
+
+            catch (ArgumentException argEx)
+            {
+                return BadRequest(new Response
+                {
+                    Code = ErrorCodes.InvalidObject,
+                    Message = Literals.InvalidKey
+                });
+            }
+            catch (KeyNotFoundException notFoundEx)
+            {
+                return BadRequest(new Response
+                {
+                    Code = ErrorCodes.NotFound,
+                    Message = Literals.NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500,
+                                          new Response
+                                          {
+                                              Code = ErrorCodes.SystemError,
+                                              Message = Literals.SystemError
+                                          });
+            }
         }
     }
 }

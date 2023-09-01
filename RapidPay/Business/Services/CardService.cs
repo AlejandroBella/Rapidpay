@@ -16,7 +16,7 @@ namespace RapidPay.Business.Services
         public override bool Delete(string id)
         {
             try
-            {
+            { 
                 if (!ValidateCardNumber(id))
                 {
                     throw new ArgumentException();
@@ -116,24 +116,30 @@ namespace RapidPay.Business.Services
         }
 
 
-        public bool AddBalance(string id, double amount)
-        {
-            var card = GetCard(id);
-
+        public bool AddBalance(BalanceDetail detail)
+        {            
+            
+            var card = unitOfWork.CardRepository.Get(x=>x.BalanceId == detail.BalanceId).FirstOrDefault();
+            if(card == null)
+            {
+                throw new KeyNotFoundException();                
+            }
             try
             {
 
-                card.CurrentBalance += amount;
+                card.CurrenBalance += detail.Amount;
                 card.Balance.Detail.Add(
-                    new BalanceDetail
+                    new BalanceDetailModel
                     {
-                        Amount = amount,
+                        Amount = detail.Amount,
                         CurrencyCode = "",
                         Date = DateTime.Now,
-                        IdBalance = card.Balance.BalanceId
+                        BalanceId = card.Balance.BalanceId
                     });
+
                 unitOfWork.CardRepository.Update(MapperService.Map<CardModel>(card));
                 unitOfWork.Save();
+                
                 return true;
             }
             catch (Exception ex)

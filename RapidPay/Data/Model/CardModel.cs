@@ -10,6 +10,8 @@
 
         public string HolderIdNumber { get; set; }
 
+        public double CurrenBalance { get; set; }
+
         public Guid BalanceId { get; set; }
 
         public BalanceModel Balance { get; set; }

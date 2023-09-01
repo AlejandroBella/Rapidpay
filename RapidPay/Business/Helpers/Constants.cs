@@ -10,6 +10,8 @@
         public const string NotFound = "The key  given was not found.";
         public const string DuplicatedItem = "The key provided already exists.";
         public const string SystemError = "There was an error processing the request, please contact the support.";
- #endregion;
+        public const string AmountNotero = "The amount can be zero";
+        public const string CurrencyInvalid = "The currency is not valid";
+        #endregion;
     }
 }
